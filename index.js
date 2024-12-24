@@ -15,7 +15,7 @@ app.use(bodyParser.json());
 app.use(cors({
     origin: [
       'http://localhost:3000',
-      'https://lms-be-muon.onrender.com'
+      'https://frontend-lms-vwe3.onrender.com'
     ],
     credentials: true
   }));
