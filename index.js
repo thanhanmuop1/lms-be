@@ -19,11 +19,12 @@ app.use(cors({
     ],
     credentials: true
   }));
+
+app.use('/teacher', teacherRoutes);
 app.use('/', lmsRoutes);
 app.use('/', quizRoutes);
 app.use('/', authRoutes);
 app.use('/', documentRoutes);
-app.use('/teacher', teacherRoutes);
 app.use('/courseEnroll', courseEnrollRoutes);
 app.use('/uploads', express.static('uploads'));
 app.use('/search', searchRoutes);
