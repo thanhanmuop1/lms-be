@@ -31,8 +31,6 @@ const upload = multer({
 
 const router = express.Router();
 
-// Middleware để kiểm tra quyền giáo viên
-router.use(authMiddleware);
 
 // Course routes
 router.get('/courses', teacherController.getTeacherCourses);
