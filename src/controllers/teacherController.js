@@ -668,10 +668,10 @@ const teacherController = {
         return res.status(404).json({ message: 'Không tìm thấy quiz' });
       }
       
-      // // Kiểm tra quyền sở hữu quiz
-      // if (quizInfo.teacher_id !== teacherId) {
-      //   return res.status(403).json({ message: 'Không có quyền truy cập quiz này' });
-      // }
+      // Kiểm tra quyền sở hữu quiz
+      if (quizInfo.teacher_id !== teacherId) {
+        return res.status(403).json({ message: 'Không có quyền truy cập quiz này' });
+      }
 
       res.json(quizInfo);
     } catch (error) {
