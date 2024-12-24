@@ -63,7 +63,7 @@ const register = async (req, res) => {
         });
 
         // Gửi email xác thực
-        const verificationUrl = `${process.env.BASE_URL}/verify-email/${verificationToken}`;
+        const verificationUrl = `https://frontend-lms-vwe3.onrender.com/verify-email/${verificationToken}`;
         const mailOptions = {
             from: process.env.MAIL_USER,
             to: email,
