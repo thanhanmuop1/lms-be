@@ -12,7 +12,13 @@ const app = express();
 const port = 5000;
 
 app.use(bodyParser.json());
-app.use(cors());
+app.use(cors({
+    origin: [
+      'http://localhost:3000',
+      'https://lms-be-mts7.onrender.com'
+    ],
+    credentials: true
+  }));
 app.use('/', lmsRoutes);
 app.use('/', quizRoutes);
 app.use('/', authRoutes);
