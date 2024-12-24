@@ -63,7 +63,7 @@ const register = async (req, res) => {
         });
 
         // Gửi email xác thực
-        const verificationUrl = `https://lms-be-muon.onrender.com//${verificationToken}`;
+        const verificationUrl = `https://lms-be-muon.onrender.com/verify-email/${verificationToken}`;
         const mailOptions = {
             from: process.env.MAIL_USER,
             to: email,
