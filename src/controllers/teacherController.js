@@ -648,6 +648,11 @@ const teacherController = {
 
   getAllTeacherQuizzes: async (req, res) => {
     try {
+      // Thêm kiểm tra user
+      if (!req.user || !req.user.id) {
+        return res.status(401).json({ message: 'Unauthorized - User not authenticated' });
+      }
+
       const teacherId = req.user.id;
       const quizzes = await quiz.getQuizzesByTeacher(teacherId);
       res.json(quizzes);
