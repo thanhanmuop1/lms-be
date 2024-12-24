@@ -662,10 +662,16 @@ const teacherController = {
       const teacherId = req.user.id;
       const quizId = req.params.id;
       
-      // Kiểm tra quyền sở hữu quiz
-      if (quizInfo.teacher_id !== teacherId) {
-        return res.status(403).json({ message: 'Không có quyền truy cập quiz này' });
+      // Lấy thông tin quiz từ quiz model
+      const quizInfo = await quiz.getQuizById(quizId);
+      if (!quizInfo) {
+        return res.status(404).json({ message: 'Không tìm thấy quiz' });
       }
+      
+      // // Kiểm tra quyền sở hữu quiz
+      // if (quizInfo.teacher_id !== teacherId) {
+      //   return res.status(403).json({ message: 'Không có quyền truy cập quiz này' });
+      // }
 
       res.json(quizInfo);
     } catch (error) {
