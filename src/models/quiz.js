@@ -843,8 +843,8 @@ const quiz = {
                 LEFT JOIN videos v ON q.video_id = v.id
                 LEFT JOIN chapters c ON q.chapter_id = c.id
                 LEFT JOIN quiz_questions qq ON q.id = qq.quiz_id
-                WHERE q.teacher_id = $1
-                GROUP BY q.id
+                WHERE q.teacher_id = ?
+                GROUP BY q.id, v.title, c.title
             `;
 
             db.query(query, [teacherId], (error, results) => {
