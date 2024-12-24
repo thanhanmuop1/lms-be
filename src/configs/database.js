@@ -1,18 +1,18 @@
-const { Pool } = require('pg');
+const mysql = require('mysql2');
 
-const pool = new Pool({
-  connectionString: 'postgresql://root:nYuvgkXOWMmnN5VZS2njn5Z1EKoImHWX@dpg-ctl85btumphs73d7vtvg-a/lms_zkxw',
-  ssl: {
-    rejectUnauthorized: false
-  }
+const db = mysql.createConnection({
+    host: 'bmkxhddui88xlnd3oqst-mysql.services.clever-cloud.com',
+    user: 'ubb1hzetrzofyjuc',
+    password: 'CxrqBtc9aQ1pxtnuKRBv',
+    database: 'bmkxhddui88xlnd3oqst'
 });
 
-pool.connect((err) => {
-  if (err) {
-    console.error('Error connecting to the database:', err.stack);
-    return;
-  }
-  console.log('Connected to the database');
+db.connect((err) => {
+    if (err) {
+        console.error('Error connecting to the database:', err.stack);
+        return;
+    }
+    console.log('Connected to the database');
 });
 
-module.exports = pool;
+module.exports = db;
