@@ -63,7 +63,7 @@ const register = async (req, res) => {
         });
 
         // Gửi email xác thực
-        const verificationUrl = `https://frontend-lms-vwe3.onrender.com/verify-email/${verificationToken}`;
+        const verificationUrl = `${process.env.BASE_URL}/verify-email/${verificationToken}`;
         const mailOptions = {
             from: process.env.MAIL_USER,
             to: email,
@@ -97,14 +97,8 @@ const register = async (req, res) => {
             }
         });
     } catch (error) {
-        console.error('Detailed error:', error);
-        if (error.code === 'EAUTH') {
-            console.error('Authentication failed. Check your email and password.');
-        }
-        res.status(500).json({ 
-            message: 'Internal server error',
-            error: error.message 
-        });
+        console.error('Registration error:', error);
+        res.status(500).json({ message: 'Đã có lỗi xảy ra khi đăng ký' });
     }
 };
 
@@ -113,38 +107,28 @@ const verifyEmail = async (req, res) => {
     try {
         const { token } = req.params;
         
-        // Tìm user với token này
-        const user = await auth.getUserByVerificationToken(token);
-        
-        if (!user) {
-            // Kiểm tra xem có user nào đã xác thực với token này không
-            const verifiedUser = await auth.getUserByVerifiedToken(token);
-            if (verifiedUser && verifiedUser.email_verified) {
-                return res.status(400).json({ 
-                    message: 'Email đã được xác thực trước đó',
-                    alreadyVerified: true
-                });
-            }
+        // Tìm user với verification token này
+        const user = await db.query(
+            'SELECT * FROM users WHERE verification_token = ? AND is_verified = 0',
+            [token]
+        );
+
+        if (!user || user.length === 0) {
             return res.status(400).json({ 
-                message: 'Token không hợp lệ hoặc đã hết hạn'
+                message: 'Token xác thực không hợp lệ hoặc đã hết hạn' 
             });
         }
 
-        // Kiểm tra xem email đã được xác thực chưa
-        if (user.email_verified) {
-            return res.status(400).json({ 
-                message: 'Email đã được xác thực trước đó',
-                alreadyVerified: true
-            });
-        }
+        // Cập nhật trạng thái xác thực của user
+        await db.query(
+            'UPDATE users SET is_verified = 1, verification_token = NULL WHERE id = ?',
+            [user[0].id]
+        );
 
-        // Cập nhật trạng thái xác thực email
-        await auth.verifyEmail(user.id);
-        
-        res.json({ message: 'Email đã được xác thực thành công' });
+        res.json({ message: 'Xác thực email thành công' });
     } catch (error) {
         console.error('Error verifying email:', error);
-        res.status(500).json({ message: 'Internal server error' });
+        res.status(500).json({ message: 'Đã có lỗi xảy ra khi xác thực email' });
     }
 };
 
