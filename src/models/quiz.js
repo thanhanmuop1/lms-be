@@ -229,7 +229,7 @@ const quiz = {
             const query = `
                 INSERT INTO quiz_attempts 
                 (user_id, quiz_id, score, status) 
-                VALUES ($1, $2, $3, $4)
+                VALUES (?, ?, ?, ?)
             `;
 
             const values = [userId, quizId, score, status];
@@ -250,7 +250,7 @@ const quiz = {
             const query = `
                 INSERT INTO quizzes 
                 (title, duration_minutes, passing_score, teacher_id) 
-                VALUES ($1, $2, $3, $4)
+                VALUES (?, ?, ?, ?)
             `;
             
             const values = [
@@ -275,7 +275,7 @@ const quiz = {
             const query = `
                 INSERT INTO quiz_questions 
                 (quiz_id, question_text, points, allows_multiple_correct) 
-                VALUES ($1, $2, $3, $4)
+                VALUES (?, ?, ?, ?)
             `;
 
             db.query(
@@ -307,7 +307,7 @@ const quiz = {
             const query = `
                 INSERT INTO quiz_options 
                 (question_id, option_text, is_correct) 
-                VALUES ($1, $2, $3)
+                VALUES ?
             `;
             
             const values = options.map(option => [
@@ -316,7 +316,7 @@ const quiz = {
                 option.is_correct ? 1 : 0
             ]);
 
-            db.query(query, values, (error, results) => {
+            db.query(query, [values], (error, results) => {
                 if (error) {
                     console.error("Error adding options:", error);
                     reject(error);
@@ -335,7 +335,7 @@ const quiz = {
                 FROM quizzes q
                 LEFT JOIN quiz_questions qq ON q.id = qq.quiz_id
                 LEFT JOIN quiz_options qo ON qq.id = qo.question_id
-                WHERE q.id = $1
+                WHERE q.id = ?
             `;
 
             db.query(query, [quizId], (error, results) => {
@@ -384,9 +384,9 @@ const quiz = {
                  c.course_id as chapter_course_id 
                  FROM quizzes q
                  LEFT JOIN quiz_questions qq ON q.id = qq.quiz_id
-                 LEFT JOIN videos v ON v.id = $1
-                 LEFT JOIN chapters c ON c.id = $2
-                 WHERE q.id = $3
+                 LEFT JOIN videos v ON v.id = ?
+                 LEFT JOIN chapters c ON c.id = ?
+                 WHERE q.id = ?
                  LIMIT 1`,
                 [video_id || null, chapter_id || null, quizId],
                 (error, results) => {
@@ -416,7 +416,7 @@ const quiz = {
 
                     // Cập nhật quiz
                     db.query(
-                        'UPDATE quizzes SET video_id = $1, chapter_id = $2, course_id = $3 WHERE id = $4',
+                        'UPDATE quizzes SET video_id = ?, chapter_id = ?, course_id = ? WHERE id = ?',
                         [video_id || null, chapter_id || null, courseId, quizId],
                         (error, updateResults) => {
                             if (error) {
@@ -553,7 +553,7 @@ const quiz = {
     unassignQuiz: (quizId) => {
         return new Promise((resolve, reject) => {
             db.query(
-                'UPDATE quizzes SET video_id = NULL, chapter_id = NULL, course_id = NULL WHERE id = $1',
+                'UPDATE quizzes SET video_id = NULL, chapter_id = NULL, course_id = NULL WHERE id = ?',
                 [quizId],
                 (error, results) => {
                     if (error) {
@@ -582,7 +582,7 @@ const quiz = {
                 FROM quizzes q
                 LEFT JOIN quiz_questions qq ON q.id = qq.quiz_id
                 LEFT JOIN quiz_options qo ON qq.id = qo.question_id
-                WHERE q.id = $1
+                WHERE q.id = ?
                 ORDER BY qq.id, qo.id
             `;
 
@@ -735,10 +735,10 @@ const quiz = {
         return new Promise((resolve, reject) => {
             const query = `
                 UPDATE quizzes 
-                SET title = $1, 
-                    duration_minutes = $2, 
-                    passing_score = $3 
-                WHERE id = $4
+                SET title = ?, 
+                    duration_minutes = ?, 
+                    passing_score = ? 
+                WHERE id = ?
             `;
             
             const values = [
@@ -763,15 +763,14 @@ const quiz = {
         return new Promise((resolve, reject) => {
             // Xóa theo thứ tự để tránh vi phạm ràng buộc khóa ngoại
             const deleteOptionsQuery = `
-                DELETE FROM quiz_options 
-                WHERE question_id IN (
-                    SELECT id FROM quiz_questions WHERE quiz_id = $1
-                )
+                DELETE qo FROM quiz_options qo
+                INNER JOIN quiz_questions qq ON qo.question_id = qq.id
+                WHERE qq.quiz_id = ?
             `;
             
             const deleteQuestionsQuery = `
                 DELETE FROM quiz_questions 
-                WHERE quiz_id = $1
+                WHERE quiz_id = ?
             `;
 
             // Thực hiện xóa options trước
@@ -817,10 +816,10 @@ const quiz = {
             const query = `
                 INSERT INTO quiz_answers 
                 (attempt_id, question_id, selected_option_id) 
-                VALUES ($1, $2, $3)
+                VALUES ?
             `;
 
-            db.query(query, values, (error, results) => {
+            db.query(query, [values], (error, results) => {
                 if (error) {
                     console.error("Error saving quiz answers:", error);
                     reject(error);
@@ -844,7 +843,7 @@ const quiz = {
                 LEFT JOIN chapters c ON q.chapter_id = c.id
                 LEFT JOIN quiz_questions qq ON q.id = qq.quiz_id
                 WHERE q.teacher_id = ?
-                GROUP BY q.id, v.title, c.title
+                GROUP BY q.id
             `;
 
             db.query(query, [teacherId], (error, results) => {
@@ -859,7 +858,7 @@ const quiz = {
 
     checkTeacherCourseAccess: (teacherId, courseId) => {
         return new Promise((resolve, reject) => {
-            const query = 'SELECT 1 FROM courses WHERE id = $1 AND teacher_id = $2';
+            const query = 'SELECT 1 FROM courses WHERE id = ? AND teacher_id = ?';
             db.query(query, [courseId, teacherId], (error, results) => {
                 if (error) reject(error);
                 else resolve(results.length > 0);
@@ -872,7 +871,7 @@ const quiz = {
             const query = `
                 SELECT 1 FROM quizzes q
                 JOIN courses c ON q.course_id = c.id
-                WHERE q.id = $1 AND c.teacher_id = $2
+                WHERE q.id = ? AND c.teacher_id = ?
             `;
             db.query(query, [quizId, teacherId], (error, results) => {
                 if (error) reject(error);
@@ -886,10 +885,10 @@ const quiz = {
             const query = `
                 UPDATE quiz_questions 
                 SET 
-                    question_text = $1,
-                    points = $2,
-                    allows_multiple_correct = $3
-                WHERE id = $4
+                    question_text = ?,
+                    points = ?,
+                    allows_multiple_correct = ?
+                WHERE id = ?
             `;
 
             db.query(
@@ -913,7 +912,7 @@ const quiz = {
 
     deleteQuestionOptions: (questionId) => {
         return new Promise((resolve, reject) => {
-            const query = 'DELETE FROM quiz_options WHERE question_id = $1';
+            const query = 'DELETE FROM quiz_options WHERE question_id = ?';
             
             db.query(query, [questionId], (error, results) => {
                 if (error) {
@@ -936,10 +935,10 @@ const quiz = {
             const query = `
                 INSERT INTO quiz_options 
                 (question_id, option_text, is_correct) 
-                VALUES ($1, $2, $3)
+                VALUES ?
             `;
 
-            db.query(query, values, (error, results) => {
+            db.query(query, [values], (error, results) => {
                 if (error) {
                     reject(error);
                     return;
@@ -959,7 +958,7 @@ const quiz = {
                     qo.is_correct
                 FROM quiz_questions qq
                 LEFT JOIN quiz_options qo ON qq.id = qo.question_id
-                WHERE qq.quiz_id = $1
+                WHERE qq.quiz_id = ?
                 ORDER BY qq.id, qo.id
             `;
 
