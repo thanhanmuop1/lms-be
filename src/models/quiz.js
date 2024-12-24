@@ -831,30 +831,21 @@ const quiz = {
         });
     },
 
-    getQuizzesByTeacher: (teacherId) => {
-        return new Promise((resolve, reject) => {
-            const query = `
-                SELECT 
-                    q.*,
-                    v.title as video_title,
-                    c.title as chapter_title,
-                    COUNT(DISTINCT qq.id) as question_count
-                FROM quizzes q
-                LEFT JOIN videos v ON q.video_id = v.id
-                LEFT JOIN chapters c ON q.chapter_id = c.id
-                LEFT JOIN quiz_questions qq ON q.id = qq.quiz_id
-                WHERE q.teacher_id = $1
-                GROUP BY q.id
-            `;
-
-            db.query(query, [teacherId], (error, results) => {
-                if (error) {
-                    reject(error);
-                    return;
-                }
-                resolve(results);
-            });
-        });
+    getQuizzesByTeacher: async (teacherId) => {
+        try {
+            const result = await db.query(
+                `SELECT q.*, COUNT(que.id) as question_count 
+                 FROM quizzes q 
+                 LEFT JOIN questions que ON q.id = que.quiz_id 
+                 WHERE q.teacher_id = $1 
+                 GROUP BY q.id`,
+                [teacherId]
+            );
+            return result.rows;
+        } catch (error) {
+            console.error('Database error in getQuizzesByTeacher:', error);
+            throw error;
+        }
     },
 
     checkTeacherCourseAccess: (teacherId, courseId) => {

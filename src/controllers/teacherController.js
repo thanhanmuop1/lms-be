@@ -648,17 +648,27 @@ const teacherController = {
 
   getAllTeacherQuizzes: async (req, res) => {
     try {
-      // Thêm kiểm tra user
       if (!req.user || !req.user.id) {
         return res.status(401).json({ message: 'Unauthorized - User not authenticated' });
       }
 
       const teacherId = req.user.id;
+      // Thêm log để debug
+      console.log('Teacher ID:', teacherId);
+      
       const quizzes = await quiz.getQuizzesByTeacher(teacherId);
+      // Thêm log để debug
+      console.log('Quizzes:', quizzes);
+      
       res.json(quizzes);
     } catch (error) {
-      console.error('Error getting teacher quizzes:', error);
-      res.status(500).json({ message: 'Internal server error' });
+      // Log chi tiết lỗi
+      console.error('Error details:', error);
+      console.error('Error stack:', error.stack);
+      res.status(500).json({ 
+        message: 'Internal server error',
+        error: error.message  // Thêm thông tin lỗi để debug
+      });
     }
   },
 
