@@ -22,14 +22,14 @@ const search = {
 
             // Tìm theo keyword
             if (searchParams.keyword) {
-                query += ` AND (c.title ILIKE $1 OR c.description ILIKE $2)`;
+                query += ` AND (c.title LIKE ? OR c.description LIKE ?)`;
                 queryParams.push(`%${searchParams.keyword}%`);
                 queryParams.push(`%${searchParams.keyword}%`);
             }
 
             // Lọc theo teacher
             if (searchParams.teacherId) {
-                query += ` AND c.teacher_id = $3`;
+                query += ` AND c.teacher_id = ?`;
                 queryParams.push(searchParams.teacherId);
             }
 
@@ -48,7 +48,7 @@ const search = {
             const page = parseInt(searchParams.page) || 1;
             const limit = parseInt(searchParams.limit) || 10;
             const offset = (page - 1) * limit;
-            query += ` LIMIT $4 OFFSET $5`;
+            query += ` LIMIT ? OFFSET ?`;
             queryParams.push(limit, offset);
 
             // Thực hiện query
@@ -66,10 +66,10 @@ const search = {
                 `;
 
                 if (searchParams.keyword) {
-                    countQuery += ` AND (c.title ILIKE $1 OR c.description ILIKE $2)`;
+                    countQuery += ` AND (c.title LIKE ? OR c.description LIKE ?)`;
                 }
                 if (searchParams.teacherId) {
-                    countQuery += ` AND c.teacher_id = $3`;
+                    countQuery += ` AND c.teacher_id = ?`;
                 }
 
                 db.query(countQuery, queryParams.slice(0, -2), (countError, countResults) => {
