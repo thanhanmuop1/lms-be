@@ -117,33 +117,22 @@ const verifyEmail = async (req, res) => {
         const user = await auth.getUserByVerificationToken(token);
         
         if (!user) {
-            return res.status(400).json({ 
-                status: 'invalid',
-                message: 'Token không hợp lệ hoặc đã hết hạn'
-            });
+            return res.redirect(`${process.env.FRONTEND_URL}?verifyStatus=invalid`);
         }
 
         // Kiểm tra xem email đã được xác thực chưa
         if (user.email_verified) {
-            return res.status(200).json({ 
-                status: 'already-verified',
-                message: 'Email đã được xác thực trước đó'
-            });
+            return res.redirect(`${process.env.FRONTEND_URL}?verifyStatus=already-verified`);
         }
 
         // Cập nhật trạng thái xác thực email
         await auth.verifyEmail(user.id);
         
-        res.json({ 
-            status: 'success',
-            message: 'Xác thực email thành công'
-        });
+        // Redirect về trang chủ với thông báo thành công
+        res.redirect(`${process.env.FRONTEND_URL}?verifyStatus=success`);
     } catch (error) {
         console.error('Error verifying email:', error);
-        res.status(500).json({ 
-            status: 'error',
-            message: 'Đã có lỗi xảy ra khi xác thực email'
-        });
+        res.redirect(`${process.env.FRONTEND_URL}?verifyStatus=error`);
     }
 };
 
