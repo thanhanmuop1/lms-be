@@ -1,4 +1,4 @@
-const db = require('../configs/database');
+const db = require('../config/database');
 
 const lms = {
     getAllCourses: () => {
@@ -148,22 +148,6 @@ const lms = {
         });
     },
 
-    deleteChaptersByCourseId: (courseId) => {
-        return new Promise((resolve, reject) => {
-            db.query(
-                'DELETE FROM chapters WHERE course_id = ?',
-                [courseId],
-                (error, results) => {
-                    if (error) {
-                        reject(error);
-                        return;
-                    }
-                    resolve(results);
-                }
-            );
-        });
-    },
-
     getCourseById: (courseId) => {
         return new Promise((resolve, reject) => {
             const query = `
@@ -192,22 +176,6 @@ const lms = {
             db.query(
                 query,
                 [title, description, thumbnail, is_public, courseId],
-                (error, results) => {
-                    if (error) {
-                        reject(error);
-                        return;
-                    }
-                    resolve(results);
-                }
-            );
-        });
-    },
-
-    deleteVideosByCourseId: (courseId) => {
-        return new Promise((resolve, reject) => {
-            db.query(
-                'DELETE FROM videos WHERE course_id = ?',
-                [courseId],
                 (error, results) => {
                     if (error) {
                         reject(error);
@@ -267,45 +235,20 @@ const lms = {
         });
     },
 
-    deleteVideosByChapterId: (chapterId) => {
+    createVideo: (videoData) => {
         return new Promise((resolve, reject) => {
+            const { title, video_url, chapter_id, course_id } = videoData;
+            
             db.query(
-                'DELETE FROM videos WHERE chapter_id = ?',
-                [chapterId],
-                (error, results) => {
-                    if (error) {
-                        reject(error);
-                        return;
-                    }
-                    resolve(results);
-                }
-            );
-        });
-    },
-
-    createVideo: ({ title, video_url, chapter_id, course_id }) => {
-        return new Promise((resolve, reject) => {
-            const query = `
-                INSERT INTO videos 
-                (title, video_url, chapter_id, course_id, created_at) 
-                VALUES (?, ?, ?, ?, NOW())
-            `;
-
-            db.query(
-                query,
+                `INSERT INTO videos (title, video_url, chapter_id, course_id, created_at)
+                 VALUES (?, ?, ?, ?, NOW())`,
                 [title, video_url, chapter_id, course_id],
                 (error, results) => {
                     if (error) {
                         reject(error);
                         return;
                     }
-                    resolve({
-                        id: results.insertId,
-                        title,
-                        video_url,
-                        chapter_id,
-                        course_id
-                    });
+                    resolve({ id: results.insertId, ...videoData });
                 }
             );
         });
@@ -494,22 +437,6 @@ const lms = {
         });
     },
 
-    getDocumentById: (documentId) => {
-        return new Promise((resolve, reject) => {
-            db.query(
-                'SELECT * FROM documents WHERE id = ?',
-                [documentId],
-                (error, results) => {
-                    if (error) {
-                        reject(error);
-                        return;
-                    }
-                    resolve(results[0]);
-                }
-            );
-        });
-    },
-
     createDocument: (documentData) => {
         return new Promise((resolve, reject) => {
             const query = `
@@ -577,20 +504,6 @@ const lms = {
         });
     },
 
-    deleteDocumentsByCourseId: (courseId) => {
-        return new Promise((resolve, reject) => {
-            const query = `DELETE FROM documents WHERE course_id = ? OR video_id IN (SELECT id FROM videos WHERE course_id = ?)`;
-            db.query(query, [courseId, courseId], (error, results) => {
-                if (error) {
-                    console.error('Database error:', error);
-                    reject(error);
-                    return;
-                }
-                resolve(results);
-            });
-        });
-    },
-
     getStudentsByCourseId: (courseId) => {
         return new Promise((resolve, reject) => {
             const query = `
@@ -641,24 +554,6 @@ const lms = {
             db.query(query, [courseId, userId], (error, results) => {
                 if (error) {
                     console.error('Error deleting student from course:', error);
-                    reject(error);
-                    return;
-                }
-                resolve(results);
-            });
-        });
-    },
-
-    deleteVideoProgress: (videoId) => {
-        return new Promise((resolve, reject) => {
-            const query = `
-                DELETE FROM video_completion 
-                WHERE video_id = ?
-            `;
-            
-            db.query(query, [videoId], (error, results) => {
-                if (error) {
-                    console.error('Error deleting video progress:', error);
                     reject(error);
                     return;
                 }

@@ -1,4 +1,5 @@
 const lms = require('../models/lms');
+const document = require('../models/document');
 
 const getAllCourses = async (req, res) => {
     try {
@@ -108,17 +109,7 @@ const deleteCourse = async (req, res) => {
             (req.user.role === 'teacher' && course.teacher_id !== req.user.id)) {
             return res.status(403).json({ message: 'Không có quyền thực hiện' });
         }
-
-        // Xóa tất cả documents của khóa học trước
-        await lms.deleteDocumentsByCourseId(courseId);
-        
-        // Xóa tất cả videos của khóa học
-        await lms.deleteVideosByCourseId(courseId);
-        
-        // Xóa tất cả chapters của khóa học
-        await lms.deleteChaptersByCourseId(courseId);
-        
-        // Cuối cùng xóa khóa học
+        // Xóa course
         await lms.deleteCourse(courseId);
         
         res.status(200).json({ message: 'Xóa khóa học thành công' });
@@ -177,7 +168,7 @@ const getCourseById = async (req, res) => {
 
 const createChapter = async (req, res) => {
     try {
-        if (req.user.role !== 'admin') {
+        if (req.user.role !== 'admin' && req.user.role !== 'teacher') {
             return res.status(403).json({ message: 'Không có quyền thực hiện' });
         }
 
@@ -225,14 +216,12 @@ const updateChapter = async (req, res) => {
 
 const deleteChapter = async (req, res) => {
     try {
-        if (req.user.role !== 'admin') {
+        // Cho phép admin và teacher xóa chương
+        if (req.user.role !== 'admin' && req.user.role !== 'teacher') {
             return res.status(403).json({ message: 'Không có quyền thực hiện' });
         }
 
         const chapterId = req.params.chapterId;
-
-        // Xóa tất cả video trong chương
-        await lms.deleteVideosByChapterId(chapterId);
         // Xóa chương
         await lms.deleteChapter(chapterId);
         
@@ -245,7 +234,8 @@ const deleteChapter = async (req, res) => {
 
 const createVideo = async (req, res) => {
     try {
-        if (req.user.role !== 'admin') {
+        // Cho phép cả admin và teacher tạo video
+        if (req.user.role !== 'admin' && req.user.role !== 'teacher') {
             return res.status(403).json({ message: 'Không có quyền thực hiện' });
         }
 
@@ -267,8 +257,24 @@ const createVideo = async (req, res) => {
                 }
             });
         }
+
+        // Kiểm tra quyền với khóa học
+        if (req.user.role === 'teacher') {
+            const course = await lms.getCourseById(course_id);
+            if (!course || course.teacher_id !== req.user.id) {
+                return res.status(403).json({ message: 'Không có quyền thêm video vào khóa học này' });
+            }
+        }
         
-        const result = await lms.createVideo(chapterId, course_id, title, video_url);
+        // Tạo video với đầy đủ thông tin
+        const videoData = {
+            title,
+            video_url,
+            chapter_id: chapterId,
+            course_id
+        };
+        
+        const result = await lms.createVideo(videoData);
         res.status(201).json(result);
     } catch (error) {
         console.error('Error creating video:', error);
@@ -314,16 +320,7 @@ const deleteVideo = async (req, res) => {
             return res.status(404).json({ message: 'Không tìm thấy video' });
         }
 
-        // Kiểm tra quyền - admin có thể xóa tất cả, giáo viên chỉ xóa được video trong khóa học của mình
-        const course = await lms.getCourseById(video.course_id);
-        if (req.user.role !== 'admin' && course.teacher_id !== req.user.id) {
-            return res.status(403).json({ message: 'Không có quyền xóa video này' });
-        }
-
-        // Xóa theo thứ tự để tránh lỗi khóa ngoại
-        await lms.deleteVideoProgress(videoId);  // Xóa video progress trước
-        await lms.deleteDocumentsByVideoId(videoId);  // Xóa documents
-        await lms.deleteVideo(videoId);  // Cuối cùng xóa video
+        await lms.deleteVideo(videoId);  // xóa video
         
         res.status(200).json({ message: 'Xóa video thành công' });
     } catch (error) {
@@ -370,7 +367,7 @@ const uploadThumbnail = async (req, res) => {
     }
 
     // Trả về đường dẫn file
-    const thumbnailUrl = `${req.protocol}://${req.get('host')}/uploads/thumbnails/${req.file.filename}`;
+    const thumbnailUrl = `/uploads/thumbnails/${req.file.filename}`;
     res.status(200).json({ url: thumbnailUrl });
   } catch (error) {
     console.error('Error uploading thumbnail:', error);

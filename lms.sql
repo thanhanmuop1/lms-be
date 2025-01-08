@@ -8,53 +8,57 @@ SET time_zone = "+00:00";
 
 
 CREATE TABLE chapters (
-  id int(11) NOT NULL,
-  course_id int(11) DEFAULT NULL,
-  title varchar(255) DEFAULT NULL,
-  order_index int(11) DEFAULT NULL,
-  created_at timestamp NOT NULL DEFAULT current_timestamp()
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  course_id INT,
+  title VARCHAR(255) DEFAULT NULL,
+  order_index INT DEFAULT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE courses (
-  id int(11) NOT NULL,
-  title varchar(200) NOT NULL,
-  description text DEFAULT NULL,
-  thumbnail varchar(255) DEFAULT NULL,
-  created_at timestamp NOT NULL DEFAULT current_timestamp(),
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  title VARCHAR(200) NOT NULL,
+  description TEXT DEFAULT NULL,
+  thumbnail VARCHAR(255) DEFAULT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   is_public TINYINT(1) DEFAULT 0,
-  teacher_id int(11)
+  teacher_id INT,
+  FOREIGN KEY (teacher_id) REFERENCES users(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE users (
-  id int(11) NOT NULL,
-  username varchar(50) NOT NULL,
-  email varchar(100) NOT NULL,
-  password varchar(255) NOT NULL,
-  full_name varchar(100) DEFAULT NULL,
-  created_at timestamp NOT NULL DEFAULT current_timestamp(),
-  role enum('admin','student','teacher') DEFAULT 'student',
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  username VARCHAR(50) UNIQUE NOT NULL,
+  email VARCHAR(100) UNIQUE NOT NULL,
+  password VARCHAR(255) NOT NULL,
+  full_name VARCHAR(100) DEFAULT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  role ENUM('admin','student','teacher') DEFAULT 'student',
   email_verified BOOLEAN DEFAULT FALSE,
-  verification_token VARCHAR(255)
+  verification_token VARCHAR(255),
+  avatar VARCHAR(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE videos (
-  id int(11) NOT NULL,
-  title varchar(200) NOT NULL,
-  course_id int(11) NOT NULL,
-  video_url varchar(255) NOT NULL,
-  chapter_id int(11) DEFAULT NULL,
-  created_at timestamp NOT NULL DEFAULT current_timestamp(),
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  title VARCHAR(200) NOT NULL,
+  course_id INT NOT NULL,
+  video_url VARCHAR(255) NOT NULL,
+  chapter_id INT DEFAULT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE,
+  FOREIGN KEY (chapter_id) REFERENCES chapters(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE video_completion (
-  id int(11) NOT NULL AUTO_INCREMENT,
-  user_id int(11) NOT NULL,
-  video_id int(11) NOT NULL,
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  user_id INT NOT NULL,
+  video_id INT NOT NULL,
   is_completed TINYINT(1) DEFAULT 0,
-  PRIMARY KEY (id),
   UNIQUE KEY user_video (user_id, video_id),
-  CONSTRAINT video_completion_ibfk_1 FOREIGN KEY (user_id) REFERENCES users (id),
-  CONSTRAINT video_completion_ibfk_2 FOREIGN KEY (video_id) REFERENCES videos (id)
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (video_id) REFERENCES videos(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Tạo bảng course_enrollments để thống kê
@@ -70,47 +74,39 @@ CREATE TABLE course_enrollments (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE quizzes (
-  id int(11) NOT NULL AUTO_INCREMENT,
-  title varchar(255) NOT NULL,
-  course_id int(11) DEFAULT NULL,
-  chapter_id int(11) DEFAULT NULL,
-  video_id int(11) DEFAULT NULL,
-  duration_minutes int(11) DEFAULT 30,
-  passing_score int(11) DEFAULT 60,
-  quiz_type ENUM('video', 'chapter') NOT NULL DEFAULT 'video',
-  created_at timestamp NOT NULL DEFAULT current_timestamp(),
-  teacher_id int(11) NOT NULL,
-  PRIMARY KEY (id),
-  KEY course_id (course_id),
-  KEY chapter_id (chapter_id),
-  KEY video_id (video_id),
-  CONSTRAINT quizzes_ibfk_1 FOREIGN KEY (course_id) REFERENCES courses (id),
-  CONSTRAINT quizzes_ibfk_2 FOREIGN KEY (chapter_id) REFERENCES chapters (id),
-  CONSTRAINT quizzes_ibfk_3 FOREIGN KEY (video_id) REFERENCES videos (id),
-  CONSTRAINT quizzes_ibfk_4 FOREIGN KEY (teacher_id) REFERENCES users (id)
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  title VARCHAR(255) NOT NULL,
+  course_id INT,
+  chapter_id INT,
+  video_id INT,
+  duration_minutes INT DEFAULT 30,
+  passing_score INT DEFAULT 60,
+  quiz_type ENUM('video', 'chapter') DEFAULT 'video',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  teacher_id INT NOT NULL,
+  FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE SET NULL,
+  FOREIGN KEY (chapter_id) REFERENCES chapters(id) ON DELETE SET NULL,
+  FOREIGN KEY (video_id) REFERENCES videos(id) ON DELETE SET NULL,
+  FOREIGN KEY (teacher_id) REFERENCES users(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE quiz_questions (
-  id int(11) NOT NULL AUTO_INCREMENT,
-  quiz_id int(11) NOT NULL,
-  question_text text NOT NULL,
-  points int(11) DEFAULT 1,
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  quiz_id INT NOT NULL,
+  question_text TEXT NOT NULL,
+  points INT DEFAULT 1,
   allows_multiple_correct TINYINT(1) DEFAULT 0,
-  created_at timestamp NOT NULL DEFAULT current_timestamp(),
-  PRIMARY KEY (id),
-  KEY quiz_id (quiz_id),
-  CONSTRAINT quiz_questions_ibfk_1 FOREIGN KEY (quiz_id) REFERENCES quizzes (id)
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (quiz_id) REFERENCES quizzes(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE quiz_options (
-  id int(11) NOT NULL AUTO_INCREMENT,
-  question_id int(11) NOT NULL,
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  question_id INT NOT NULL,
   option_text TEXT NOT NULL,
   is_correct TINYINT(1) DEFAULT 0,
-  created_at timestamp NOT NULL DEFAULT current_timestamp(),
-  PRIMARY KEY (id),
-  KEY question_id (question_id),
-  CONSTRAINT quiz_options_ibfk_1 FOREIGN KEY (question_id) REFERENCES quiz_questions (id)
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (question_id) REFERENCES quiz_questions(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE quiz_attempts (
@@ -120,8 +116,8 @@ CREATE TABLE quiz_attempts (
   score INT NOT NULL,
   status ENUM('completed', 'failed') NOT NULL,
   end_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (user_id) REFERENCES users(id),
-  FOREIGN KEY (quiz_id) REFERENCES quizzes(id)
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (quiz_id) REFERENCES quizzes(id) ON DELETE CASCADE
 );
 
 CREATE TABLE quiz_answers (
@@ -163,65 +159,72 @@ CREATE TABLE quiz_tag_relations (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE documents (
-  id int(11) NOT NULL AUTO_INCREMENT,
-  title varchar(255) NOT NULL,
-  file_path varchar(255) NOT NULL,
-  file_type varchar(50) NOT NULL,
-  course_id int(11) NOT NULL,
-  chapter_id int(11) DEFAULT NULL,
-  video_id int(11) DEFAULT NULL,
-  uploaded_at timestamp NOT NULL DEFAULT current_timestamp(),
-  teacher_id int(11) NOT NULL,
-  PRIMARY KEY (id),
-  FOREIGN KEY (course_id) REFERENCES courses(id),
-  FOREIGN KEY (chapter_id) REFERENCES chapters(id),
-  FOREIGN KEY (video_id) REFERENCES videos(id)
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  title VARCHAR(255) NOT NULL,
+  file_path VARCHAR(255) NOT NULL,
+  file_type VARCHAR(50) NOT NULL,
+  course_id INT NOT NULL,
+  chapter_id INT,
+  video_id INT,
+  uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  teacher_id INT NOT NULL,
+  FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE,
+  FOREIGN KEY (chapter_id) REFERENCES chapters(id) ON DELETE CASCADE,
+  FOREIGN KEY (video_id) REFERENCES videos(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-ALTER TABLE chapters
-  ADD PRIMARY KEY (id),
-  ADD KEY course_id (course_id);
+-- Bảng lớp học
+CREATE TABLE classes (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    teacher_id INT NOT NULL,
+    class_code VARCHAR(10) UNIQUE NOT NULL,  -- Mã lớp học unique
+    password VARCHAR(255) DEFAULT NULL,       -- Mật khẩu để tham gia (có thể NULL)
+    requires_password BOOLEAN DEFAULT FALSE,  -- Flag xác định có yêu cầu mật khẩu không
+    status ENUM('active', 'inactive') DEFAULT 'active',
+    max_students INT DEFAULT 100,
+    thumbnail VARCHAR(255) DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (teacher_id) REFERENCES users(id)
+);
 
-ALTER TABLE courses
-  ADD PRIMARY KEY (id);
+-- Bảng trung gian liên kết giữa lớp học và khóa học
+CREATE TABLE class_courses (
+    class_id INT,
+    course_id INT,
+    requires_approval BOOLEAN DEFAULT FALSE,  -- Thêm flag yêu cầu phê duyệt
+    added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE,
+    FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE,
+    PRIMARY KEY (class_id, course_id)
+);
 
-ALTER TABLE users
-  ADD PRIMARY KEY (id),
-  ADD UNIQUE KEY username (username),
-  ADD UNIQUE KEY email (email);
+-- Bảng học sinh trong lớp và trạng thái với từng khóa học
+CREATE TABLE class_students_courses_approval (
+    class_id INT,
+    student_id INT,
+    course_id INT,
+    status ENUM('pending', 'approved', 'rejected', 'blocked') DEFAULT 'pending',
+    joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE,
+    FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE,
+    PRIMARY KEY (class_id, student_id, course_id)
+);
 
-ALTER TABLE videos
-  ADD PRIMARY KEY (id),
-  ADD KEY course_id (course_id),
-  ADD KEY chapter_id (chapter_id);
-
-
-ALTER TABLE chapters
-  MODIFY id int(11) NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE courses
-  MODIFY id int(11) NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE users
-  MODIFY id int(11) NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE videos
-  MODIFY id int(11) NOT NULL AUTO_INCREMENT;
-
-
-ALTER TABLE chapters
-  ADD CONSTRAINT chapters_ibfk_1 FOREIGN KEY (course_id) REFERENCES courses (id);
-
-ALTER TABLE videos
-  ADD CONSTRAINT videos_ibfk_1 FOREIGN KEY (course_id) REFERENCES courses (id),
-  ADD CONSTRAINT videos_ibfk_2 FOREIGN KEY (chapter_id) REFERENCES chapters (id);
-
-ALTER TABLE courses
-  ADD FOREIGN KEY (teacher_id) REFERENCES users(id);
-
-ALTER TABLE users 
-  ADD COLUMN email_verified BOOLEAN DEFAULT FALSE,
-  ADD COLUMN verification_token VARCHAR(255);
+-- Bảng học sinh trong lớp (giữ nguyên)
+CREATE TABLE class_students (
+    class_id INT,
+    student_id INT,
+    status ENUM('pending', 'active', 'blocked') DEFAULT 'active',
+    joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE,
+    FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE,
+    PRIMARY KEY (class_id, student_id)
+);
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;

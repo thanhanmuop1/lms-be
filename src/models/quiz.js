@@ -1,4 +1,4 @@
-const db = require('../configs/database');
+const db = require('../config/database');
 
 const quiz = {
     getQuizzesByChapter: (chapterId) => {
@@ -329,14 +329,7 @@ const quiz = {
 
     deleteQuiz: (quizId) => {
         return new Promise((resolve, reject) => {
-            // Xóa tất cả bằng một query với LEFT JOIN
-            const query = `
-                DELETE q, qq, qo
-                FROM quizzes q
-                LEFT JOIN quiz_questions qq ON q.id = qq.quiz_id
-                LEFT JOIN quiz_options qo ON qq.id = qo.question_id
-                WHERE q.id = ?
-            `;
+            const query = 'DELETE FROM quizzes WHERE id = ?';
 
             db.query(query, [quizId], (error, results) => {
                 if (error) {
@@ -761,35 +754,13 @@ const quiz = {
 
     deleteQuizQuestions: (quizId) => {
         return new Promise((resolve, reject) => {
-            // Xóa theo thứ tự để tránh vi phạm ràng buộc khóa ngoại
-            const deleteOptionsQuery = `
-                DELETE qo FROM quiz_options qo
-                INNER JOIN quiz_questions qq ON qo.question_id = qq.id
-                WHERE qq.quiz_id = ?
-            `;
-            
-            const deleteQuestionsQuery = `
-                DELETE FROM quiz_questions 
-                WHERE quiz_id = ?
-            `;
-
-            // Thực hiện xóa options trước
-            db.query(deleteOptionsQuery, [quizId], (error) => {
+            const query = 'DELETE FROM quiz_questions WHERE quiz_id = ?';
+            db.query(query, [quizId], (error, results) => {
                 if (error) {
-                    console.error("Error deleting options:", error);
                     reject(error);
                     return;
                 }
-
-                // Sau đó xóa questions
-                db.query(deleteQuestionsQuery, [quizId], (error, results) => {
-                    if (error) {
-                        console.error("Error deleting questions:", error);
-                        reject(error);
-                        return;
-                    }
-                    resolve(results);
-                });
+                resolve(results);
             });
         });
     },

@@ -4,6 +4,7 @@ const lmsControllers = require('../controllers/lmsControllers');
 const { authMiddleware, authorizeAdmin } = require('../middleware/auth');
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
 
 router.get('/courses', lmsControllers.getAllCourses);
 router.get('/videos', lmsControllers.getAllVideos);
@@ -24,10 +25,15 @@ router.put('/videos/:videoId', authMiddleware, lmsControllers.updateVideo);
 router.delete('/videos/:videoId', authMiddleware, lmsControllers.deleteVideo);
 router.post('/videos/:videoId/mark-watched', authMiddleware, lmsControllers.markVideoAsWatched);
 
+const uploadDir = 'uploads/thumbnails';
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+}
+
 // Cấu hình multer cho upload thumbnail
 const thumbnailStorage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/thumbnails');
+    cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);

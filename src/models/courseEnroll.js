@@ -1,4 +1,4 @@
-const db = require('../configs/database');
+const db = require('../config/database');
 
 const checkEnrollment = (userId, courseId, callback) => {
   db.query(

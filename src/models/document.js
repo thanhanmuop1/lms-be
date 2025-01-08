@@ -1,4 +1,5 @@
-const db = require('../configs/database');
+const db = require('../config/database');
+const fs = require('fs');
 
 const document = {
     createDocument: (documentData) => {
@@ -79,7 +80,7 @@ const document = {
                 resolve(results);
             });
         });
-    }
+    },
 };
 
 module.exports = document;

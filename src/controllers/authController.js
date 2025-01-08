@@ -117,22 +117,22 @@ const verifyEmail = async (req, res) => {
         const user = await auth.getUserByVerificationToken(token);
         
         if (!user) {
-            return res.redirect(`${process.env.FRONTEND_URL}?verifyStatus=invalid`);
+            return res.redirect(`${process.env.FRONTEND_URL}/login?verifyStatus=invalid`);
         }
 
         // Kiểm tra xem email đã được xác thực chưa
         if (user.email_verified) {
-            return res.redirect(`${process.env.FRONTEND_URL}?verifyStatus=already-verified`);
+            return res.redirect(`${process.env.FRONTEND_URL}/login?verifyStatus=already-verified`);
         }
 
         // Cập nhật trạng thái xác thực email
         await auth.verifyEmail(user.id);
         
-        // Redirect về trang chủ với thông báo thành công
-        res.redirect(`${process.env.FRONTEND_URL}?verifyStatus=success`);
+        // Redirect về trang login với thông báo thành công
+        res.redirect(`${process.env.FRONTEND_URL}/login?verifyStatus=success`);
     } catch (error) {
         console.error('Error verifying email:', error);
-        res.redirect(`${process.env.FRONTEND_URL}?verifyStatus=error`);
+        res.redirect(`${process.env.FRONTEND_URL}/login?verifyStatus=error`);
     }
 };
 
@@ -170,7 +170,6 @@ const login = async (req, res) => {
                 role: user.role // Đảm bảo có trường role
             },
             process.env.JWT_SECRET,
-            { expiresIn: '24h' }
         );
 
         res.json({

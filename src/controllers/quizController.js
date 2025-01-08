@@ -82,66 +82,28 @@ const quizController = {
 
     createQuiz: async (req, res) => {
         try {
-            // Kiểm tra quyền admin
-            if (req.user.role !== 'admin') {
-                return res.status(403).json({ message: 'Không có quyền thực hiện' });
-            }
-
-            const {
-                title,
-                course_id,
-                chapter_id,
-                video_id,
-                duration_minutes,
-                passing_score,
-                quiz_type,
-                questions
-            } = req.body;
-
-            // Tạo quiz
-            const quizId = await quiz.createQuiz({
-                title,
-                course_id,
-                chapter_id,
-                video_id,
-                duration_minutes,
-                passing_score,
-                quiz_type
-            });
-
-            // Thêm các câu hỏi và đáp án
-            if (questions && questions.length > 0) {
-                for (const questionData of questions) {
-                    const questionId = await quiz.addQuestionToQuiz(quizId, {
-                        question_text: questionData.question_text,
-                        points: questionData.points
-                    });
-
-                    if (questionData.options && questionData.options.length > 0) {
-                        await quiz.addOptionsToQuestion(questionId, questionData.options);
-                    }
-                }
-            }
-
-            res.status(201).json({ 
-                message: 'Quiz created successfully',
-                quizId: quizId
-            });
+          const teacherId = req.user.id;
+          const { title, duration_minutes, passing_score } = req.body;
+    
+          const result = await quiz.createQuiz({
+            title,
+            duration_minutes,
+            passing_score,
+            teacher_id: teacherId
+          });
+    
+          res.status(201).json({ 
+            message: 'Tạo quiz thành công',
+            quizId: result.insertId 
+          });
         } catch (error) {
-            console.error('Error creating quiz:', error);
-            res.status(500).json({ 
-                message: 'Internal server error',
-                error: error.message 
-            });
+          console.error('Error creating quiz:', error);
+          res.status(500).json({ message: 'Internal server error' });
         }
-    },
+      },
 
     deleteQuiz: async (req, res) => {
         try {
-            if (req.user.role !== 'admin') {
-                return res.status(403).json({ message: 'Không có quyền thực hiện' });
-            }
-
             const quizId = req.params.quizId;
             await quiz.deleteQuiz(quizId);
             
@@ -164,7 +126,7 @@ const quizController = {
 
     assignQuiz: async (req, res) => {
         try {
-            if (req.user.role !== 'admin') {
+            if (req.user.role !== 'admin' && req.user.role !== 'teacher') {
                 return res.status(403).json({ message: 'Không có quyền thực hiện' });
             }
 
@@ -232,7 +194,7 @@ const quizController = {
 
     unassignQuiz: async (req, res) => {
         try {
-            if (req.user.role !== 'admin') {
+            if (req.user.role !== 'admin' && req.user.role !== 'teacher') {
                 return res.status(403).json({ message: 'Không có quyền thực hiện' });
             }
 
@@ -276,21 +238,19 @@ const quizController = {
 
     updateQuiz: async (req, res) => {
         try {
-            if (req.user.role !== 'admin') {
-                return res.status(403).json({ message: 'Không có quyền thực hiện' });
-            }
-
             const quizId = req.params.quizId;
             const {
                 title,
                 duration_minutes,
-                passing_score
+                passing_score,
+                points_per_question
             } = req.body;
 
             await quiz.updateQuiz(quizId, {
                 title,
                 duration_minutes,
-                passing_score
+                passing_score,
+                points_per_question
             });
 
             res.json({ message: 'Quiz updated successfully' });

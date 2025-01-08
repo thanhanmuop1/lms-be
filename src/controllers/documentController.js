@@ -22,11 +22,19 @@ const storage = multer.diskStorage({
 
 // Kiểm tra loại file
 const fileFilter = (req, file, cb) => {
-    const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    const allowedTypes = [
+        'application/pdf', 
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'image/jpeg',
+        'image/png',
+        'image/jpg'
+    ];
+    
     if (allowedTypes.includes(file.mimetype)) {
         cb(null, true);
     } else {
-        cb(new Error('Invalid file type. Only PDF and Word documents are allowed.'), false);
+        cb(new Error('Invalid file type. Only PDF, Word documents and images (JPEG, PNG, JPG) are allowed.'), false);
     }
 };
 

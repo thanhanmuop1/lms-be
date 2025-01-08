@@ -16,9 +16,7 @@ router.get('/documents', documentController.getDocuments);
 // Download document
 router.get('/documents/:id/download', documentController.downloadDocument);
 
-// Delete document (chỉ admin mới có quyền xóa)
-router.delete('/documents/:id', 
-    documentController.deleteDocument
-);
+// Delete document
+router.delete('/documents/:id', documentController.deleteDocument);
 
 module.exports = router; 
